@@ -149,11 +149,67 @@ app.get('/cipher', (req, res) => {
 //q3
 
 app.get('/lotto', (req, res) =>{
-    const numbers = req.query.numbers;
+    const {numbers} = req.query;
+
+    //validation:
+    //1. the numbers array must exist
+    //2. must be an array
+    //3. must be 6 numbers
+    //4. numbers must be between 1 and 20
 
     if(!numbers){
         return res.status(400).send('please give the  numbers!!');
     }
+    if(!Array.isArray(numbers)){
+        return res.status(400).send('number must be in an array');
+    }
 
-    
+    const guess = numbers
+                    .map(num => parseInt(num))
+                    .filter(num => !Number.isNaN(num) && (num >=1 && num <=20));
+
+        if(guess.length != 6){
+            return res.status(400).send('number must contain 6 / between 1 and 20')
+        }
+
+    //fully validated numbers
+
+    //here are the 20 numbers to choose from
+    const stockNumbers = Array(20).fill(1).map((_,i)=> i+1);
+
+    //randomly choose 6
+    const winningNumber = [];
+    for(let i = 0 ; i < 6 ; i++){
+        const ran = Math.floor(Math.random()*stockNumbers.length);
+        winningNumber.push(stockNumbers[ran]);
+        stockNumbers.splice(ran, 1);
+    }
+
+    //compare the guess to the winning number
+    let diff= winningNumber.filter(num => !guess.includes(num));
+    //construct a response
+    let responseText;
+
+    switch(diff.length){
+        case 0 :
+            responseText = 'Wow! Unbelievable! You could have won the mega millions!';
+            break;
+        case 1 :
+            responseText = 'Congratulations! You win $100!';
+            break;
+        case 2 :
+            responseText = 'Congratulations, you win a free ticket!';
+            break;
+        default:
+            responseText = 'Sorry, you lose';
+    }
+    //how the results ran
+    res.json({
+        guess,
+        winningNumber,
+        diff,
+        responseText
+    });
+
+    res.send(responseText);
 })
